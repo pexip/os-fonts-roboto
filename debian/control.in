@@ -1,0 +1,55 @@
+Source: fonts-roboto
+Priority: optional
+Section: fonts
+Build-Depends: @cdbs@
+Maintainer: Debian Fonts Task Force <pkg-fonts-devel@lists.alioth.debian.org>
+Uploaders: Vasudev Kamath <vasudev@copyninja.info>,
+ Jonas Smedegaard <dr@jones.dk>
+Standards-Version: 3.9.6
+Homepage: https://github.com/google/roboto
+Vcs-Git: https://anonscm.debian.org/git/pkg-fonts/fonts-roboto.git
+Vcs-Browser: https://anonscm.debian.org/cgit/pkg-fonts/fonts-roboto.git
+
+Package: fonts-roboto
+Architecture: all
+Multi-Arch: foreign
+Depends: ${misc:Depends},
+ fonts-roboto-hinted
+Description: metapackage to pull in Roboto fonts
+ Roboto is Google's signature family of fonts, the default font in
+ Android and ChromeOS and the recommended font for Google's visual
+ language, Material Design.
+ .
+ Roboto supports all Latin, Cyrillic, and Greek characters in Unicode
+ 7.0 as well as currency symbol for the Georgian lari, to be published
+ in Unicode 8.0.
+
+Package: fonts-roboto-hinted
+Architecture: all
+Multi-Arch: foreign
+Depends: ${misc:Depends}
+Description: Google's signature family of fonts (hinted)
+ Roboto is Google's signature family of fonts, the default font in
+ Android and ChromeOS and the recommended font for Google's visual
+ language, Material Design.
+ .
+ Roboto supports all Latin, Cyrillic, and Greek characters in Unicode
+ 7.0 as well as currency symbol for the Georgian lari, to be published
+ in Unicode 8.0.
+ .
+ This package contains Roboto font families with hinting.
+
+Package: fonts-roboto-unhinted
+Architecture: all
+Multi-Arch: foreign
+Depends: ${misc:Depends}
+Description: Google's signature family of fonts (unhinted)
+ Roboto is Google's signature family of fonts, the default font in
+ Android and ChromeOS and the recommended font for Google's visual
+ language, Material Design.
+ .
+ Roboto supports all Latin, Cyrillic, and Greek characters in Unicode
+ 7.0 as well as currency symbol for the Georgian lari, to be published
+ in Unicode 8.0.
+ .
+ This package contains Roboto font families which lack hinting.
