@@ -2,7 +2,6 @@ Source: fonts-roboto
 Priority: optional
 Section: fonts
 Build-Depends: cdbs,
- licensecheck,
  debhelper,
  dh-buildinfo,
  libregexp-assemble-perl,
