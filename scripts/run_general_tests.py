@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# coding=UTF-8
 #
 # Copyright 2015 Google Inc. All Rights Reserved.
 #
@@ -25,17 +26,13 @@ import roboto_data
 
 FONTS = font_tests.load_fonts(
     ['out/RobotoTTF/*.ttf', 'out/RobotoCondensedTTF/*.ttf'],
-    expected_count=18)
-
-UFOS = font_tests.load_fonts(
-    ['out/RobotoUFO/*.ufo', 'out/RobotoCondensedUFO/*.ufo'],
-    expected_count=18,
-    font_class=OpenFont)
+    expected_count=20)
 
 UFO_MASTERS = font_tests.load_fonts(
     ['src/v2/*.ufo'],
     expected_count=3,
     font_class=OpenFont)
+
 
 class TestItalicAngle(font_tests.TestItalicAngle):
     loaded_fonts = FONTS
@@ -51,10 +48,10 @@ class TestMetaInfo(font_tests.TestMetaInfo):
 
     loaded_fonts = FONTS
     mark_heavier_as_bold = False
+    mark_italic_as_oblique = True
     test_us_weight = None
 
-    #expected_version = '2.' + roboto_data.get_build_number()
-    test_version_numbers = None
+    expected_version = roboto_data.get_version_number()
 
     # fsType of 0 marks the font free for installation, embedding, etc.
     expected_os2_fsType = 0
@@ -72,7 +69,7 @@ class TestNames(font_tests.TestNames):
     expected_copyright = 'Copyright 2011 Google Inc. All Rights Reserved.'
 
     def expected_unique_id(self, family, style):
-        return 'Google:%s:2015' % family
+        return 'Google:%s %s:2016' % (family, style)
 
 
 class TestDigitWidths(font_tests.TestDigitWidths):
@@ -94,10 +91,24 @@ class TestCharacterCoverage(font_tests.TestCharacterCoverage):
 
 class TestLigatures(font_tests.TestLigatures):
     loaded_fonts = FONTS
+    active = (
+        (None, ('fi', 'fl', 'ffi', 'ffl')),
+        ('--language=FRA', ('fi', 'fl', 'ffi', 'ffl')),
+        ('--language=TRK', ('fl', 'ffl')),
+        ('--features=dlig', ('ff', 'st', u'ſt')),
+    )
+    inactive = (
+        (None, ('ff', 'st', u'ſt')),
+        ('--language=TRK', ('fi', 'ffi')),
+        ('--script=arab', ('fi', 'fl', 'ffi', 'ffl')),
+    )
 
 
 class TestFeatures(font_tests.TestFeatures):
     loaded_fonts = FONTS
+    smcp_reqs_path = 'res/smcp_requirements.txt'
+    c2sc_reqs_path = 'res/c2sc_requirements.txt'
+    unic_reqs_path = 'res/unic_requirements.txt'
 
 
 class TestVerticalMetrics(font_tests.TestVerticalMetrics):
@@ -106,8 +117,27 @@ class TestVerticalMetrics(font_tests.TestVerticalMetrics):
     test_hhea_table_metrics = None
     test_os2_metrics = None
 
+    # tests yMin and yMax to be equal to Roboto v1 values
+    # android requires this, and web fonts expect this
     expected_head_yMin = -555
     expected_head_yMax = 2163
+
+
+class TestGlyphBounds(font_tests.TestGlyphBounds):
+    loaded_fonts = FONTS
+
+    should_exceed = (
+        (('chi',), (None, 0, None, None), 0, 'is it an alias of x?'),
+    )
+
+    should_not_exceed = (
+        (('Epsilontonos', 'Etatonos', 'Iotatonos', 'Upsilontonos'),
+            (-150, None, None, None), 0.4,
+            'may be susceptible to aggressive clipping'),
+        (('uni1F1B', 'uni1F2B', 'uni1F3B', 'uni1F5B', 'uni1F9B'),
+            (-550, None, None, None), 0.1,
+            'may be susceptible to aggressive clipping'),
+    )
 
 
 class TestGlyphAreas(font_tests.TestGlyphAreas):

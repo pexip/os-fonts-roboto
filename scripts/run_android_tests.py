@@ -24,7 +24,11 @@ import run_general_tests
 
 FONTS = font_tests.load_fonts(
     ['out/android/*.ttf'],
-    expected_count=18)
+    expected_count=20)
+
+
+class TestItalicAngle(run_general_tests.TestItalicAngle):
+    loaded_fonts = FONTS
 
 
 class TestMetaInfo(run_general_tests.TestMetaInfo):
@@ -35,6 +39,18 @@ class TestMetaInfo(run_general_tests.TestMetaInfo):
     loaded_fonts = FONTS
     mark_heavier_as_bold = True
 
+    def test_glyphs_dont_round_to_grid(self):
+        """Bug: https://github.com/google/roboto/issues/153"""
+
+        for font in self.fonts:
+            glyph_set = font.getGlyphSet()
+
+            # only concerned with this glyph for now, but maybe more later
+            for name in ['ellipsis']:
+                glyph = glyph_set[name]._glyph
+                for component in glyph.components:
+                    self.assertFalse(component.flags & (1 << 2))
+
 
 class TestNames(run_general_tests.TestNames):
     """Bugs:
@@ -42,22 +58,25 @@ class TestNames(run_general_tests.TestNames):
     """
 
     loaded_fonts = FONTS
-    mark_heavier_as_bold = True
 
 
 class TestVerticalMetrics(font_tests.TestVerticalMetrics):
     loaded_fonts = FONTS
-    test_glyphs_ymin_ymax = None
-    test_hhea_table_metrics = None
     test_os2_metrics = None
 
+    # tests yMin and yMax to be equal to Roboto v1 values
+    # android requires this, and web fonts expect this
     expected_head_yMin = -555
     expected_head_yMax = 2163
+
+    # test ascent, descent, and lineGap to be equal to Roboto v1 values
+    expected_hhea_descent = -500
+    expected_hhea_ascent = 1900
+    expected_hhea_lineGap = 0
 
 
 class TestDigitWidths(font_tests.TestDigitWidths):
     loaded_fonts = FONTS
-    test_superscript_digits = None
 
 
 class TestCharacterCoverage(font_tests.TestCharacterCoverage):
@@ -76,7 +95,7 @@ class TestCharacterCoverage(font_tests.TestCharacterCoverage):
         ) - include  # don't exclude legacy PUA
 
 
-class TestSpacingMarks(font_tests.TestSpacingMarks):
+class TestLigatures(run_general_tests.TestLigatures):
     loaded_fonts = FONTS
 
 
