@@ -51,3 +51,12 @@ clean-extracted-copyright-during-build: debian/stamp-copyright-check
 clean::
 	find -type f -name '*.metadata_dump' -delete
 	rm -f debian/stamp-extract-copyright
+
+binary-install/fonts-roboto-hinted:: binary-install/fonts-roboto-unhinted
+	mkdir -p debian/fonts-roboto-hinted/usr/share/fonts/truetype/roboto/hinted
+	for d in debian/fonts-roboto-unhinted/usr/share/fonts/truetype/roboto/unhinted/*.ttf \
+	         debian/fonts-roboto-unhinted/usr/share/fonts/truetype/roboto/unhinted/*/*.ttf; \
+	do \
+		echo ln -s $${d#debian/fonts-roboto-unhinted} debian/fonts-roboto-hinted/usr/share/fonts/truetype/roboto/hinted/; \
+		ln -s $${d#debian/fonts-roboto-unhinted} debian/fonts-roboto-hinted/usr/share/fonts/truetype/roboto/hinted/; \
+	done

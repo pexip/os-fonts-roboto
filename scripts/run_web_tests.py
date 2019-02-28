@@ -17,22 +17,23 @@
 """Test assumptions that web fonts rely on."""
 
 import unittest
-
-from nototools import font_data
 from nototools.unittests import font_tests
+
+import run_general_tests
+
 
 FONTS = font_tests.load_fonts(
     ['out/web/*.ttf'],
     expected_count=18)
 
-class TestItalicAngle(font_tests.TestItalicAngle):
+
+class TestItalicAngle(run_general_tests.TestItalicAngle):
     loaded_fonts = FONTS
-    expected_italic_angle = -12.0
 
 
 class TestMetaInfo(font_tests.TestMetaInfo):
     loaded_fonts = FONTS
-    mark_heavier_as_bold = True
+    mark_heavier_as_bold = False
 
     # Since different font files are hinted at different times, the actual
     # outlines differ slightly. So we are keeping the version numbers as a hint.
@@ -43,18 +44,18 @@ class TestMetaInfo(font_tests.TestMetaInfo):
     expected_os2_achVendID = 'GOOG'
 
 
-class TestNames(font_tests.TestNames):
+class TestNames(run_general_tests.TestNames):
     """Bugs:
     https://github.com/google/roboto/issues/37
     """
 
     loaded_fonts = FONTS
-    family_name = 'Roboto'
-    mark_heavier_as_bold = True
-    expected_copyright = 'Copyright 2011 Google Inc. All Rights Reserved.'
 
     def expected_unique_id(self, family, style):
-        return family + ' ' + style
+        expected = family
+        if style != 'Regular':
+            expected += ' ' + style
+        return expected
 
 
 class TestDigitWidths(font_tests.TestDigitWidths):
@@ -79,13 +80,17 @@ class TestCharacterCoverage(font_tests.TestCharacterCoverage):
 class TestVerticalMetrics(font_tests.TestVerticalMetrics):
     loaded_fonts = FONTS
 
+    # tests yMin and yMax to be equal to Roboto v1 values
+    # android requires this, and web fonts expect this
     expected_head_yMin = -555
     expected_head_yMax = 2163
 
+    # test ascent, descent, and lineGap to be equal to Roboto v1 values
     expected_hhea_descent = -500
     expected_hhea_ascent = 1900
     expected_hhea_lineGap = 0
 
+    # test OS/2 vertical metrics to be equal to the old values
     expected_os2_sTypoDescender = -512
     expected_os2_sTypoAscender = 1536
     expected_os2_sTypoLineGap = 102
@@ -93,8 +98,17 @@ class TestVerticalMetrics(font_tests.TestVerticalMetrics):
     expected_os2_usWinAscent = 1946
 
 
-class TestLigatures(font_tests.TestLigatures):
+class TestLigatures(run_general_tests.TestLigatures):
     loaded_fonts = FONTS
+
+
+class TestGlyphBounds(run_general_tests.TestGlyphBounds):
+    loaded_fonts = FONTS
+
+    # a bug in which monotonic and polytonic glyphs extend too far left is
+    # fixed in the unhinted output, but still present in the hinted binaries and
+    # not fixed by the web target
+    should_not_exceed = ()
 
 
 class TestHints(font_tests.TestHints):

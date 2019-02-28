@@ -218,13 +218,12 @@ class FGlyph:
 
 class Master:
 
-    def __init__(self, font=None, v=0, kernlist=None, overlay=None,
-                 anchorPath=None):
+    def __init__(self, font=None, v=0, kernlist=None, overlay=None):
         if isinstance(font, FFont):
             self.font = None
             self.ffont = font
         elif isinstance(font,str):
-            self.openFont(font,overlay, anchorPath)
+            self.openFont(font,overlay)
         elif isinstance(font,Mix):
             self.font = font
         else:
@@ -243,7 +242,7 @@ class Master:
                             and not k[0] == ""]
             #TODO implement class based kerning / external kerning file
     
-    def openFont(self, path, overlayPath=None, anchorPath=None):
+    def openFont(self, path, overlayPath=None):
         self.font = OpenFont(path)
         for g in self.font:
           size = len(g)
@@ -256,16 +255,6 @@ class Master:
             font = self.font
             for overlayGlyph in overlayFont:
                 font.insertGlyph(overlayGlyph)
-
-        # work around a bug with vfb2ufo in which anchors are dropped from
-        # glyphs containing components and no contours. "anchorPath" should
-        # point to the output of src/v2/get_dropped_anchors.py
-        if anchorPath:
-            anchorData = json.load(open(anchorPath))
-            for glyphName, anchors in anchorData.items():
-                glyph = self.font[glyphName]
-                for name, (x, y) in anchors.items():
-                    glyph.appendAnchor(str(name), (x, y))
 
         self.ffont = FFont(self.font)
 
@@ -345,14 +334,24 @@ def interpolate(a,b,v,e=0):
     qe = (b-a)*v*v*v + a   #cubic easing
     le = a+(b-a)*v   # linear easing
     return le + (qe-le) * e
-    
+
 def interpolateKerns(kA, kB, v):
-    kerns = {}
-    for pair in kA.keys():
-        matchedKern = kB.get(pair)
-        # if matchedkern == None:
-        #     matchedkern = Kern(kA)
-        #     matchedkern.value = 0
-        if matchedKern != None:
-            kerns[pair] = interpolate(kA[pair], matchedKern, v.x)
-    return kerns
+    # to yield correct kerning for Roboto output, we must emulate the behavior
+    # of old versions of this code; namely, take the kerning values of the first
+    # master instead of actually interpolating.
+    # old code:
+    # https://github.com/google/roboto/blob/7f083ac31241cc86d019ea6227fa508b9fcf39a6/scripts/lib/fontbuild/mix.py
+    # bug:
+    # https://github.com/google/roboto/issues/213
+
+    #kerns = {}
+    #for pair, val in kA.items():
+    #    kerns[pair] = interpolate(val, kB.get(pair, 0), v.x)
+    #for pair, val in kB.items():
+    #    lerped_val = interpolate(val, kA.get(pair, 0), 1 - v.x)
+    #    if pair in kerns:
+    #        assert abs(kerns[pair] - lerped_val) < 1e-6
+    #    else:
+    #        kerns[pair] = lerped_val
+    #return kerns
+    return dict(kA)
