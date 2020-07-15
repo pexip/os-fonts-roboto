@@ -1,3 +1,9 @@
+fonts-roboto (2:0~20160106-2pexip2) pexip; urgency=medium
+
+  * Rebuild in buster environment
+
+ -- Steve McIntyre <steve.mcintyre@pexip.com>  Wed, 15 Jul 2020 18:28:40 +0000
+
 fonts-roboto (2:0~20160106-2pexip1) pexip; urgency=low
 
   * Prepare Pexip packaging
