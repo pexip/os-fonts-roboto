@@ -44,7 +44,7 @@ android:
 # the new toolchain
 android-from-hinted:
 	mkdir -p out/android
-	for source in hinted/*.ttf; do \
+	for source in src/hinted/*.ttf; do \
 	        unhinted=$$(mktemp); \
 		touched=$$(mktemp); \
 		subsetted=$$(mktemp); \
@@ -58,20 +58,30 @@ android-from-hinted:
 
 web:
 	mkdir -p out/web
-	for source in hinted/*.ttf; do \
+	for source in src/hinted/*.ttf; do \
+		basename=$$(basename $$source); \
+		case $$source in \
+			src/hinted/Roboto-*) unhinted=out/RobotoTTF/$$basename ;; \
+			*) unhinted=out/RobotoCondensedTTF/$$basename ;; \
+		esac; \
 		touched=$$(mktemp); \
 		final=out/web/$$(basename $$source); \
-		python scripts/touchup_for_web.py $$source $$touched Roboto && \
+		python scripts/touchup_for_web.py $$source $$unhinted $$touched Roboto && \
 		python scripts/subset_for_web.py $$touched $$final && \
 		rm $$touched; \
 	done
 
 chromeos:
 	mkdir -p out/chromeos
-	for source in hinted/*.ttf; do \
+	for source in src/hinted/*.ttf; do \
+		basename=$$(basename $$source); \
+		case $$source in \
+			src/hinted/Roboto-*) unhinted=out/RobotoTTF/$$basename ;; \
+			*) unhinted=out/RobotoCondensedTTF/$$basename ;; \
+		esac; \
 		touched=$$(mktemp); \
 		final=out/chromeos/$$(basename $$source); \
-		python scripts/touchup_for_web.py $$source $$touched Roboto && \
+		python scripts/touchup_for_cros.py $$source $$unhinted $$touched Roboto && \
 		python $$HOME/noto/nototools/subset.py $$touched $$final && \
 		rm $$touched; \
 	done

@@ -20,30 +20,30 @@ from nototools import noto_fonts
 
 import roboto_data
 
-def apply_temporary_fixes(font):
+def apply_temporary_fixes(font, is_for_cros=False, is_for_web=False):
     """Apply some temporary fixes."""
     # Fix usWeight:
     font_name = font_data.font_name(font)
     weight = noto_fonts.parse_weight(font_name)
     weight_number = noto_fonts.WEIGHTS[weight]
+    # Chrome OS wants Thin to have usWeightClass=100
+    if is_for_cros and weight == 'Thin':
+        weight_number = 100
     font['OS/2'].usWeightClass = weight_number
 
-    # Set ascent, descent, and lineGap values to Android K values
-    hhea = font['hhea']
-    hhea.ascent = 1900
-    hhea.descent = -500
-    hhea.lineGap = 0
-
-    # Copyright message
-    font_data.set_name_record(
-        font, 0, 'Copyright 2011 Google Inc. All Rights Reserved.')
-
+    # Set bold bits for Black (macStyle bit 0, fsSelection bit 5)
+    if is_for_web is False:
+        name_records = font_data.get_name_records(font)
+        family_name = name_records[1]
+        if family_name.endswith('Black'):
+            font['head'].macStyle |= (1 << 0)
+            font['OS/2'].fsSelection |= (1 << 5)
+            font['OS/2'].fsSelection &= ~(1 << 6)
 
 def update_version_and_revision(font):
-    """Update version and revision numbers from buildnumber.txt."""
-    build_number = roboto_data.get_build_number()
-    version_number = '2.' + build_number
+    """Update version and revision numbers."""
+
+    version_number = roboto_data.get_version_number()
     version_record = 'Version %s; %d' % (version_number, date.today().year)
     font_data.set_name_record(font, 5, version_record)
     font['head'].fontRevision = float(version_number)
-

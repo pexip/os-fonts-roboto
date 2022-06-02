@@ -14,91 +14,53 @@
 
 
 import re
-from anchors import alignComponentsToAnchors
 from string import find
+
+from anchors import alignComponentsToAnchors, getAnchorByName
+
 
 def parseComposite(composite):
     c = composite.split("=")
     d = c[1].split("/")
     glyphName = d[0]
     if len(d) == 1:
-        offset = [0,0]
+        offset = [0, 0]
     else:
         offset = [int(i) for i in d[1].split(",")]
     accentString = c[0]
     accents = accentString.split("+")
     baseName = accents.pop(0)
-    accentNames = [i.split(":") for i in accents ]
+    accentNames = [i.split(":") for i in accents]
     return (glyphName, baseName, accentNames, offset)
 
 
 def copyMarkAnchors(f, g, srcname, width):
-    unicode_range = range(0x0030, 0x02B0) + range(0x1E00, 0x1EFF)
-    anchors = f[srcname].anchors
-    for anchor in anchors:
-        if "top_dd" == anchor.name:
+    for anchor in f[srcname].anchors:
+        if anchor.name in ("top_dd", "bottom_dd", "top0315"):
             g.appendAnchor(anchor.name, (anchor.x + width, anchor.y))
-        if "bottom_dd" == anchor.name:
-            g.appendAnchor(anchor.name, (anchor.x + width, anchor.y))
-        if "top0315" == anchor.name:
-            g.appendAnchor(anchor.name, (anchor.x + width, anchor.y))
-        if "top" == anchor.name:
-            if g.unicode == None:
-                if not g.name.endswith(('.ccmp', '.smcp', '.NAV')):
-                    continue                
-            if False == (g.unicode in unicode_range):
-                if not g.name.endswith(('.ccmp', '.smcp', '.NAV')):
-                    continue
-            #if g.unicode > 0x02B0:
-            #    continue
-            parenttop_present = 0
-            for anc in g.anchors:
-                if anc.name == "parent_top":
-                    parenttop_present = 1
-            if 0 == parenttop_present:
-                g.appendAnchor("parent_top", anchor.position)
 
-        if "bottom" == anchor.name:
-            if g.unicode == None:
-                if -1 == find(g.name, ".smcp"):
-                    continue
-            if False == (g.unicode in unicode_range):
-                if -1 == find(g.name, ".smcp"):
-                    continue
-            #if g.unicode > 0x02B0:
-            #    continue
-            bottom_present = 0
-            for anc in g.anchors:
-                if anc.name == "bottom":
-                    bottom_present = 1
-            if 0 == bottom_present:
-                g.appendAnchor("bottom", anchor.position)
+        if ("top" == anchor.name and
+            not any(a.name == "parent_top" for a in g.anchors)):
+            g.appendAnchor("parent_top", anchor.position)
 
+        if ("bottom" == anchor.name and
+            not any(a.name == "bottom" for a in g.anchors)):
+            g.appendAnchor("bottom", anchor.position)
 
-#            g.appendAnchor("top", anchor.position)
-            
- #       if "rhotichook" == anchor.name:
- #           g.appendAnchor(anchor.name, (anchor.x + width, anchor.y))
- 
-    #print g.anchors
-    for anchor in g.anchors:
-        if "top" == anchor.name:
-            #print g.name, g.anchors
-            return
- 
-    anchor_parent_top = None
+    if any(a.name == "top" for a in g.anchors):
+        return
 
-    for anchor in g.anchors:
-        if "parent_top" == anchor.name:
-            anchor_parent_top = anchor
-            break
-
+    anchor_parent_top = getAnchorByName(g, "parent_top")
     if anchor_parent_top is not None:
         g.appendAnchor("top", anchor_parent_top.position)
 
 
 def generateGlyph(f,gname,glyphList={}):
     glyphName, baseName, accentNames, offset = parseComposite(gname)
+    if f.has_key(glyphName):
+        print('Existing glyph "%s" found in font, ignoring composition rule '
+              '"%s"' % (glyphName, gname))
+        return
 
     if baseName.find("_") != -1:
         g = f.newGlyph(glyphName)
@@ -107,25 +69,21 @@ def generateGlyph(f,gname,glyphList={}):
             g.width += f[componentName].width
             setUnicodeValue(g, glyphList)
 
-    else: 
-        if not f.has_key(glyphName):
-            try:
-                f.compileGlyph(glyphName, baseName, accentNames)
-            except KeyError as e:
-                print ("KeyError raised for composition rule '%s', likely %s "
-                    "anchor not found in glyph '%s'" % (gname, e, baseName))
-                return
-            g = f[glyphName]
-            setUnicodeValue(g, glyphList)
-            copyMarkAnchors(f, g, baseName, offset[1] + offset[0])
-            if offset[0] != 0 or offset[1] != 0:
-                g.width += offset[1] + offset[0]
-                g.move((offset[0], 0), anchors=False)
-            if len(accentNames) > 0:
-                alignComponentsToAnchors(f, glyphName, baseName, accentNames)
-        else:
-            print ("Existing glyph '%s' found in font, ignoring composition "
-                "rule '%s'" % (glyphName, gname))
+    else:
+        try:
+            f.compileGlyph(glyphName, baseName, accentNames)
+        except KeyError as e:
+            print('KeyError raised for composition rule "%s", likely "%s" '
+                  'anchor not found in glyph "%s"' % (gname, e, baseName))
+            return
+        g = f[glyphName]
+        setUnicodeValue(g, glyphList)
+        copyMarkAnchors(f, g, baseName, offset[1] + offset[0])
+        if len(accentNames) > 0:
+            alignComponentsToAnchors(f, glyphName, baseName, accentNames)
+        if offset[0] != 0 or offset[1] != 0:
+            g.width += offset[1] + offset[0]
+            g.move((offset[0], 0), anchors=False)
 
 
 def setUnicodeValue(glyph, glyphList):

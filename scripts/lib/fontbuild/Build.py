@@ -18,7 +18,7 @@ import os
 import sys
 
 from booleanOperations import BooleanOperationManager
-from cu2qu.rf import fonts_to_quadratic
+from cu2qu.ufo import fonts_to_quadratic
 from fontTools.misc.transform import Transform
 from robofab.world import OpenFont
 from ufo2ft import compileOTF, compileTTF
@@ -34,23 +34,23 @@ from fontbuild.mix import Mix,Master,narrowFLGlyph
 
 
 class FontProject:
-    
-    def __init__(self, basefont, basedir, configfile, thinfont = None):
+
+    def __init__(self, basefont, basedir, configfile):
         self.basefont = basefont
-        self.thinfont = thinfont
         self.basedir = basedir
         self.config = ConfigParser.RawConfigParser()
-        self.configfile = self.basedir+"/"+configfile
+        self.configfile = os.path.join(self.basedir, configfile)
         self.config.read(self.configfile)
-        
-        diacriticList = open(self.basedir + "/" + self.config.get("res","diacriticfile")).readlines()
-        self.diacriticList = [line.strip() for line in diacriticList if not line.startswith("#")]
-        self.ot_classes = open(self.basedir + "/" + self.config.get("res","ot_classesfile")).read()
-        self.ot_kerningclasses = open(self.basedir + "/" + self.config.get("res","ot_kerningclassesfile")).read()
-        #self.ot_features = open(self.basedir + "/" + self.config.get("res","ot_featuresfile")).read()
-        adobeGlyphList = open(self.basedir + "/" + self.config.get("res", "agl_glyphlistfile")).readlines()
-        self.adobeGlyphList = dict([line.split(";") for line in adobeGlyphList if not line.startswith("#")])
-        
+
+        self.diacriticList = [
+            line.strip() for line in self.openResource("diacriticfile")
+            if not line.startswith("#")]
+        self.adobeGlyphList = dict(
+            line.split(";") for line in self.openResource("agl_glyphlistfile")
+            if not line.startswith("#"))
+        self.glyphOrder = self.openResource("glyphorder")
+        self.thinGlyphOrder = self.openResource("glyphorder_thin")
+
         # map exceptional glyph names in Roboto to names in the AGL
         roboNames = (
             ('Obar', 'Ocenteredtilde'), ('obar', 'obarred'),
@@ -64,30 +64,16 @@ class FontProject:
         self.lessItalic = self.config.get("glyphs","lessitalic").split()
         self.deleteList = self.config.get("glyphs","delete").split()
         self.noItalic = self.config.get("glyphs","noitalic").split()
-        self.buildnumber = self.loadBuildNumber()
-        
+
         self.buildOTF = False
         self.compatible = False
         self.generatedFonts = []
-        
-        
-    def loadBuildNumber(self):
-        versionFile = open(self.basedir + "/" + self.config.get("main","buildnumberfile"), "r+")
-        buildnumber = int(versionFile.read().strip())
-        buildnumber = "%05d" %(int(buildnumber) + 1)
-        print "BuildNumber: %s" %(buildnumber)
-        versionFile.close()
-        return buildnumber
-        
-    def incrementBuildNumber(self):
-        if len(self.buildnumber) > 0:
-            versionFile = open(self.basedir + "/" + self.config.get("main","buildnumberfile"), "r+")
-            versionFile.seek(0)
-            versionFile.write(self.buildnumber)
-            versionFile.truncate()
-            versionFile.close()
-        else:
-            raise Exception("Empty build number")
+
+    def openResource(self, name):
+        with open(os.path.join(
+                self.basedir, self.config.get("res", name))) as resourceFile:
+            resource = resourceFile.read()
+        return resource.splitlines()
 
     def generateOutputPath(self, font, ext):
         family = font.info.familyName.replace(" ", "")
@@ -96,9 +82,9 @@ class FontProject:
         if not os.path.exists(path):
             os.makedirs(path)
         return os.path.join(path, "%s-%s.%s" % (family, style, ext))
-    
-    def generateFont(self, mix, names, italic=False, swapSuffixes=None, stemWidth=185, kern=True):
-        
+
+    def generateFont(self, mix, names, italic=False, swapSuffixes=None, stemWidth=185):
+
         n = names.split("/")
         log("---------------------\n%s %s\n----------------------" %(n[0],n[1]))
         log(">> Mixing masters")
@@ -118,7 +104,7 @@ class FontProject:
             for g in f:
                 i += 1
                 if i % 10 == 0: print g.name
-                
+
                 if g.name == "uniFFFD":
                     continue
 
@@ -128,10 +114,11 @@ class FontProject:
                     italicizeGlyph(f, g, 9, stemWidth=stemWidth)
                 elif False == (g.name in self.noItalic):
                     italicizeGlyph(f, g, 10, stemWidth=stemWidth)
-                #elif g.name != ".notdef":
-                #    italicizeGlyph(g, 10, stemWidth=stemWidth)
                 if g.width != 0:
                     g.width += 10
+
+            # set the oblique flag in fsSelection
+            f.info.openTypeOS2Selection.append(9)
 
         if swapSuffixes != None:
             for swap in swapSuffixes:
@@ -146,7 +133,7 @@ class FontProject:
         log(">> Generating glyphs")
         generateGlyphs(f, self.diacriticList, self.adobeGlyphList)
         log(">> Copying features")
-        readFeatureFile(f, self.ot_classes + self.basefont.features.text)
+        readFeatureFile(f, self.basefont.features.text)
         log(">> Decomposing")
         for gname in self.decompose:
             if f.has_key(gname):
@@ -158,10 +145,6 @@ class FontProject:
             cleanCurves(f)
         deleteGlyphs(f, self.deleteList)
 
-        if kern:
-            log(">> Generating kern classes")
-            readFeatureFile(f, self.ot_kerningclasses)
-
         log(">> Generating font files")
         ufoName = self.generateOutputPath(f, "ufo")
         f.save(ufoName)
@@ -171,7 +154,9 @@ class FontProject:
             log(">> Generating OTF file")
             newFont = OpenFont(ufoName)
             otfName = self.generateOutputPath(f, "otf")
-            saveOTF(newFont, otfName)
+            saveOTF(
+                newFont, otfName,
+                self.thinGlyphOrder if "Thin" in otfName else self.glyphOrder)
 
     def generateTTFs(self):
         """Build TTF for each font generated since last call to generateTTFs."""
@@ -184,19 +169,19 @@ class FontProject:
         # fewer control points and look noticeably different
         max_err = 0.002
         if self.compatible:
-            fonts_to_quadratic(fonts, max_err_em=max_err, dump_stats=True)
+            fonts_to_quadratic(fonts, max_err_em=max_err, dump_stats=True, reverse_direction=True)
         else:
             for font in fonts:
-                fonts_to_quadratic([font], max_err_em=max_err, dump_stats=True)
+                fonts_to_quadratic([font], max_err_em=max_err, dump_stats=True, reverse_direction=True)
 
         log(">> Generating TTF files")
         for font in fonts:
             ttfName = self.generateOutputPath(font, "ttf")
             log(os.path.basename(ttfName))
-            for glyph in font:
-                for contour in glyph:
-                    contour.reverseContour()
-            saveOTF(font, ttfName, truetype=True)
+            saveOTF(
+                font, ttfName,
+                self.thinGlyphOrder if "Thin" in ttfName else self.glyphOrder,
+                truetype=True)
 
 
 def transformGlyphMembers(g, m):
@@ -218,6 +203,7 @@ def transformGlyphMembers(g, m):
         s = Point(c.scale)
         s.Transform(m)
         #c.scale = s
+
 
 def swapContours(f,gName1,gName2):
     try:
@@ -248,7 +234,7 @@ def log(msg):
 def generateGlyphs(f, glyphNames, glyphList={}):
     log(">> Generating diacritics")
     glyphnames = [gname for gname in glyphNames if not gname.startswith("#") and gname != ""]
-    
+
     for glyphName in glyphNames:
         generateGlyph(f, glyphName, glyphList)
 
@@ -260,7 +246,7 @@ def cleanCurves(f):
     # log(">> Mitring sharp corners")
     # for g in f:
     #     mitreGlyph(g, 3., .7)
-    
+
     # log(">> Converting curves to quadratic")
     # for g in f:
     #     glyphCurvesToQuadratic(g)
@@ -281,13 +267,16 @@ def removeGlyphOverlap(glyph):
     manager.union(contours, glyph.getPointPen())
 
 
-def saveOTF(font, destFile, truetype=False):
+def saveOTF(font, destFile, glyphOrder, truetype=False):
     """Save a RoboFab font as an OTF binary using ufo2fdk."""
 
     if truetype:
-        compiler = compileTTF
+        otf = compileTTF(font, featureCompilerClass=RobotoFeatureCompiler,
+                   kernWriter=RobotoKernWriter, glyphOrder=glyphOrder,
+                   convertCubics=False,
+                   useProductionNames=False)
     else:
-        compiler = compileOTF
-    otf = compiler(font, featureCompilerClass=RobotoFeatureCompiler,
-                   kernWriter=RobotoKernWriter)
+        otf = compileOTF(font, featureCompilerClass=RobotoFeatureCompiler,
+                   kernWriter=RobotoKernWriter, glyphOrder=glyphOrder,
+                   useProductionNames=False)
     otf.save(destFile)
