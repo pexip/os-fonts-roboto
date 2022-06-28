@@ -8,13 +8,15 @@ Build-Depends: cdbs,
  libregexp-assemble-perl,
  libimage-exiftool-perl,
  libfont-ttf-perl
-Maintainer: Debian Fonts Task Force <pkg-fonts-devel@lists.alioth.debian.org>
-Uploaders: Vasudev Kamath <vasudev@copyninja.info>,
+Maintainer: Pexip AS <packaging@pexip.com>
+XSBC-Pexip-Original-Maintainer: Debian Fonts Task Force <pkg-fonts-devel@lists.alioth.debian.org>
+XSBC-Pexip-Original-Uploaders: Vasudev Kamath <vasudev@copyninja.info>,
  Jonas Smedegaard <dr@jones.dk>
 Standards-Version: 3.9.6
 Homepage: https://github.com/google/roboto
 Vcs-Git: https://salsa.debian.org/fonts-team/fonts-roboto.git
 Vcs-Browser: https://salsa.debian.org/fonts-team/fonts-roboto
+XS-Pexip-Upstream: http://deb.debian.org/debian/ bullseye
 
 Package: fonts-roboto
 Architecture: all
