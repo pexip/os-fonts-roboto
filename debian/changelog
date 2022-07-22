@@ -1,3 +1,9 @@
+fonts-roboto (2:0~20170802-3pexip4) pexip-bullseye; urgency=medium
+
+  * Rebuild for override changes
+
+ -- Mark Hymers <mark.hymers@pexip.com>  Fri, 22 Jul 2022 11:52:58 +0100
+
 fonts-roboto (2:0~20170802-3pexip3) pexip-bullseye; urgency=medium
 
   * Fix debian/control fields (Maintainer/Uploaders/Upstream)
