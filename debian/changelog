@@ -1,3 +1,9 @@
+fonts-roboto (2:0~20170802-3pexip5) pexip-bullseye; urgency=medium
+
+  * Bullseye rebuild for ARM64 inclusion
+
+ -- Mark Hymers <mark.hymers@pexip.com>  Mon, 05 Sep 2022 10:31:40 +0100
+
 fonts-roboto (2:0~20170802-3pexip4) pexip-bullseye; urgency=medium
 
   * Rebuild for override changes
