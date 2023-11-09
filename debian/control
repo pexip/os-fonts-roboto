@@ -16,7 +16,7 @@ Standards-Version: 3.9.6
 Homepage: https://github.com/google/roboto
 Vcs-Git: https://salsa.debian.org/fonts-team/fonts-roboto.git
 Vcs-Browser: https://salsa.debian.org/fonts-team/fonts-roboto
-XS-Pexip-Upstream: http://deb.debian.org/debian/ bullseye
+XS-Pexip-Upstream: http://deb.debian.org/debian/ bookworm
 
 Package: fonts-roboto
 Architecture: all
