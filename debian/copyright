@@ -9,7 +9,7 @@ Files: *
 Copyright: 2015, Google Inc.
 License: Apache-2.0
 
-Files: hinted/*
+Files:
  out/*
  scripts/lib/*
  src/v2/*
