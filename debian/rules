@@ -20,18 +20,9 @@
 
 # This needs to declared/run before including CDBS snippets
 
-include /usr/share/cdbs/1/rules/upstream-tarball.mk
 include /usr/share/cdbs/1/rules/utils.mk
 include /usr/share/cdbs/1/rules/debhelper.mk
 
-
-DEB_UPSTREAM_URL = https://github.com/google/roboto/archive
-DEB_UPSTREAM_PACKAGE = RobotoFonts
-DEB_UPSTREAM_TARBALL_SRCDIR = roboto-fonts-$(DEB_UPSTREAM_TARBALL_BASENAME)
-
-DEB_UPSTREAM_TARBALL_SRCDIR += $(if \
- $(filter $(DEB_UPSTREAM_PACKAGE)-%,$(DEB_UPSTREAM_TARBALL_BASENAME)),\
-  $(error set DEB_UPSTREAM_TARBALL_BASENAME to commit hash))
 
 # extract metadata from images before copyright check
 CDBS_BUILD_DEPENDS +=, libregexp-assemble-perl, libimage-exiftool-perl
@@ -51,12 +42,3 @@ clean-extracted-copyright-during-build: debian/stamp-copyright-check
 clean::
 	find -type f -name '*.metadata_dump' -delete
 	rm -f debian/stamp-extract-copyright
-
-binary-install/fonts-roboto-hinted:: binary-install/fonts-roboto-unhinted
-	mkdir -p debian/fonts-roboto-hinted/usr/share/fonts/truetype/roboto/hinted
-	for d in debian/fonts-roboto-unhinted/usr/share/fonts/truetype/roboto/unhinted/*.ttf \
-	         debian/fonts-roboto-unhinted/usr/share/fonts/truetype/roboto/unhinted/*/*.ttf; \
-	do \
-		echo ln -s $${d#debian/fonts-roboto-unhinted} debian/fonts-roboto-hinted/usr/share/fonts/truetype/roboto/hinted/; \
-		ln -s $${d#debian/fonts-roboto-unhinted} debian/fonts-roboto-hinted/usr/share/fonts/truetype/roboto/hinted/; \
-	done
