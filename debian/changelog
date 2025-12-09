@@ -1,3 +1,12 @@
+fonts-roboto (2:0~20170802-4) unstable; urgency=medium
+
+  * Team upload
+  * Replace cdbs upstream-tarball with uscan
+  * Drop transitional package (Closes: #1032700)
+  * d/control: Build-Depends: remove dh-buildinfo
+
+ -- Bastian Germann <bage@debian.org>  Fri, 04 Apr 2025 13:13:02 +0200
+
 fonts-roboto (2:0~20170802-3+pexip25u2) pexip-trixie; urgency=medium
 
   * Trixie build for product distribution
@@ -51,15 +60,6 @@ fonts-roboto (2:0~20170802-3pexip2) pexip-bullseye; urgency=medium
   * Main bullseye build
 
  -- Mark Hymers <mark.hymers@pexip.com>  Fri, 24 Jun 2022 13:55:15 +0100
-
-fonts-roboto (2:0~20170802-4) unstable; urgency=medium
-
-  * Team upload
-  * Replace cdbs upstream-tarball with uscan
-  * Drop transitional package (Closes: #1032700)
-  * d/control: Build-Depends: remove dh-buildinfo
-
- -- Bastian Germann <bage@debian.org>  Fri, 04 Apr 2025 13:13:02 +0200
 
 fonts-roboto (2:0~20170802-3pexip1) pexip; urgency=medium
 
